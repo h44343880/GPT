@@ -5,11 +5,7 @@ from openai_client import OpenAIClient
 import json
 from datetime import datetime
 
-def get_article(file_path):
-    with open(file_path, 'r', encoding='UTF-8') as f:
-        return f.read()
-        
-def get_prompt(file_path):
+def read_file(file_path):
     with open(file_path, 'r', encoding='UTF-8') as f:
         return f.read()
     
@@ -36,7 +32,8 @@ def get_sentence_emotion_array(response, emotions_list):
             sentence = sentence.replace("\'", "") # remove ' from sentence
             sentence_emotion_array.append({
                 'sentence': sentence,
-                'emotion': next(filter(lambda emo: emo in emotion, emotions_list), None) # match emotion from emotions_list
+                'emotion': next(filter(lambda emo: emo in emotion, emotions_list), "default") # match emotion from emotions_list
+                # 'emotion': "default"
             })
     return sentence_emotion_array
 
@@ -71,22 +68,30 @@ def main():
     # load env vars
     PROMPT_PATH = os.getenv("PROMPT_PATH")
     ARTICLE_PATH = os.getenv("ARTICLE_PATH")
+    TEXT_PATH = os.getenv("TEXT_PATH")
     OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
     GPT_SOVITS_ENDPOINT = os.getenv("GPT_SOVITS_ENDPOINT")
     CHARACTER_NAME = os.getenv("CHARACTER_NAME")
     AUDIO_PATH = os.getenv("AUDIO_DIR")
     OUTPUT_PATH = os.getenv("OUTPUT_DIR")
-    print(f"Loaded env vars, {LOG_PATH}, {PROMPT_PATH}, {ARTICLE_PATH}, {OPENAI_API_KEY}, {GPT_SOVITS_ENDPOINT}, {CHARACTER_NAME}, {AUDIO_PATH}, {OUTPUT_PATH}")
+    print(f"Loaded env vars, {LOG_PATH}, {PROMPT_PATH}, {ARTICLE_PATH}, {TEXT_PATH}, {OPENAI_API_KEY}, {GPT_SOVITS_ENDPOINT}, {CHARACTER_NAME}, {AUDIO_PATH}, {OUTPUT_PATH}")
     
     # pre-processing prompt
-    article = get_article(ARTICLE_PATH)
-    prompt = get_prompt(PROMPT_PATH)
+    prompt = read_file(PROMPT_PATH)
+    text = read_file(TEXT_PATH)
     
     # get emotions list
     gpt_sovits_client = GPTSoVITSClient(GPT_SOVITS_ENDPOINT)
     character_list = gpt_sovits_client.get_character_list()
     emotions_list = character_list[CHARACTER_NAME]
     # emotions_list = ["開心", "難過"]
+
+    # generate article
+    openai_client = OpenAIClient(api_key=OPENAI_API_KEY)
+    response = openai_client.generate_article(text)
+    with open(ARTICLE_PATH, 'w', encoding='UTF-8') as f:
+        f.write(response)
+    article = read_file(ARTICLE_PATH)
     
     # finalize prompt
     finalized_prompt = append_article_to_prompt(prompt=prompt, emotions_list=emotions_list, article=article)

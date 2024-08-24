@@ -9,6 +9,18 @@ class OpenAIClient:
             base_url="https://api.chatanywhere.tech/v1"
         )
         self.model = model
+    
+    def generate_article(self, text):
+        res = self.client.chat.completions.create(
+            model=self.model,
+            messages=[
+                {"role": "system", "content": "You are a helpful assistant."},
+                {"role": "user", "content": text}
+            ]
+        )
+        response = res.choices[0].message.content
+        return response
+
 
     def get_emotion(self, prompt, max_retries=100):
         retries = 0
@@ -22,6 +34,7 @@ class OpenAIClient:
             )
             response = res.choices[0].message.content
             if self.is_response_format_correct(response):
+                print(response)
                 return response
             retries += 1
         raise ValueError("Failed to get a valid response after multiple retries.")
