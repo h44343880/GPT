@@ -1,9 +1,10 @@
-﻿from dotenv import load_dotenv
+from dotenv import load_dotenv
 import os
 from src.gpt_sovits_client import GPTSoVITSClient
 from src.openai_client import OpenAIClient
 import json
 from datetime import datetime
+from src.request_real3d import request_real3d
 
 def read_file(file_path):
     with open(file_path, 'r', encoding='UTF-8') as f:
@@ -112,6 +113,8 @@ def main():
         
     # export to json
     export_to_json(f'{OUTPUT_PATH}/output.json', sentence_emotion_list)
+
+    request_real3d(sentence_emotion_list)
 
     # close gpt sovits connection    
     gpt_sovits_client.close()
